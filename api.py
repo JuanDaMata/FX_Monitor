@@ -2,25 +2,21 @@ import requests
 
 URL_BASE = "https://economia.awesomeapi.com.br/json/"
 
-
+CACHE = {}
+    
 def resposta_get_api(endpoint):
     url_completa = URL_BASE + endpoint
 
     try:
         resposta = requests.get(url_completa, timeout=10)
-
-        if resposta.status_code == 429:
-            print("Erro 429: limite da API atingido")
-            return {"erro": "quota_excedida"}
-
         resposta.raise_for_status()
 
-        return resposta.json()
+        data = resposta.json()
+        CACHE[endpoint] = data
+        return data
 
     except requests.Timeout:
-        print("Erro: timeout na requisição")
-        return None
+        return {"erro": "timeout"}
 
-    except requests.RequestException as e:
-        print(f"Erro na API: {e}")
-        return None
+    except requests.RequestException:
+        return {"erro": "falha_api"}
