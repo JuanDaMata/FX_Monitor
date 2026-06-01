@@ -3,12 +3,17 @@ import streamlit as st
 from paginas.cotacoes import renderizar_cotacoes
 from paginas.conversor import renderizar_conversor
 from paginas.grafico import renderizar_grafico
+from utils.debug import debug_api
 
 
 st.set_page_config(layout="centered")
 
+
 st.title("💰 Painel Financeiro")
 st.divider()
+
+if st.sidebar.checkbox("🔧 Debug API"):
+    debug_api()
 
 aba_cotacao, aba_conversao, aba_grafico = st.tabs([
     "Cotação Moedas",
