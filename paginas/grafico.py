@@ -58,17 +58,29 @@ def renderizar_grafico():
         st.info("Carregando gráfico...")
         st.divider()
 
-        st.info(
-            "Passe o mouse sobre o gráfico para visualizar os valores de cada data."
-        )
-
         par_moeda_grafico = f"{moeda_origem}-{moeda_destino}"
 
         historico_variacao = obter_historico_moeda(par_moeda_grafico, dias_anteriores)
 
+        if not historico_variacao:
+            st.warning("Não foi possível carregar o histórico da API.")
+            return
+
         data_frame = pd.DataFrame(historico_variacao)
 
-        data_frame[tipo_cotacao] = data_frame[tipo_cotacao].astype(float)
+        if data_frame.empty:
+            st.warning("Dados vazios da API.")
+            return
+
+        if tipo_cotacao not in data_frame.columns:
+            st.error(f"Coluna '{tipo_cotacao}' não encontrada nos dados da API.")
+            st.write(data_frame.columns)
+            return
+
+        data_frame[tipo_cotacao] = pd.to_numeric(
+            data_frame[tipo_cotacao],
+            errors="coerce"
+        )
 
         data_frame["timestamp"] = pd.to_datetime(
             data_frame["timestamp"].astype(int),
@@ -76,47 +88,26 @@ def renderizar_grafico():
         )
 
         data_frame = data_frame.set_index("timestamp")
-
         data_frame.index = data_frame.index.strftime("%d/%m/%Y")
 
         st.line_chart(data_frame[tipo_cotacao])
+        st.divider()
 
-    st.divider()
-    with st.expander("Visualizar histórico em tabela"):
-        st.subheader(
-            f"Variação de {moeda_origem} → {moeda_destino} nos últimos {dias_anteriores} dias"
-        )
+        with st.expander("Visualizar histórico em tabela"):
 
-        st.info(
-            f"Carregando histórico {tipo_cotacao} dos ultimos {dias_anteriores}..."
-        )
+            st.subheader(
+                f"Variação de {moeda_origem} → {moeda_destino} nos últimos {dias_anteriores} dias"
+            )
 
-        par_moeda_grafico = f"{moeda_origem}-{moeda_destino}"
+            tabela = data_frame.reset_index()[["timestamp", tipo_cotacao]]
 
-        historico_variacao = obter_historico_moeda(par_moeda_grafico, dias_anteriores)
+            tabela = tabela.rename(columns={
+                "timestamp": "Data",
+                tipo_cotacao: f"Valor {tipo_cotacao.upper()}"
+            })
 
-        data_frame = pd.DataFrame(historico_variacao)
-
-        data_frame[tipo_cotacao] = data_frame[tipo_cotacao].astype(float)
-
-        data_frame["timestamp"] = pd.to_datetime(
-            data_frame["timestamp"].astype(int),
-            unit="s"
-        )
-
-        data_frame["timestamp"] = data_frame["timestamp"].dt.strftime("%d/%m/%Y")
-
-
-        tabela_filtrada = data_frame[["timestamp", tipo_cotacao]]
-
-        tabela_filtrada = tabela_filtrada.rename(columns={
-            "timestamp": "Data",
-            tipo_cotacao: f"Valor {tipo_cotacao.upper()}"
-        })
-
-
-        st.dataframe(
-            tabela_filtrada,
-            width="stretch",
-            hide_index=True
-        )
+            st.dataframe(
+                tabela,
+                hide_index=True,
+                width="stretch"
+            )
