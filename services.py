@@ -5,7 +5,10 @@ def buscar_cotacao(par_moeda, tipo="bid"):
 
     dados = resposta_get_api(url_completa)
 
-    if dados:
+    if not dados:
+        return None
+
+    try:
         moedas_tratadas = par_moeda.replace("-", "")
 
         valor_cotacao = float(dados[moedas_tratadas][tipo])
@@ -15,8 +18,9 @@ def buscar_cotacao(par_moeda, tipo="bid"):
             "valor": valor_cotacao,
             "variacao": variacao
         }
-    
-    return None
+
+    except (KeyError, ValueError, TypeError):
+        return None
 
 
 def converter(valor, cotacao):

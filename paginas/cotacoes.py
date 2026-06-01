@@ -33,14 +33,26 @@ def renderizar_cotacoes():
 
             cotacao = buscar_cotacao(par, tipo_cotacao)
 
+            if cotacao is None:
+                st.error(f"Falha ao carregar: {par}")
+
             moeda_base = par.split("-")[0]
 
             with col:
-                st.metric (
-                    label=f"Cotação {moeda_base}:",
-                    value=f"R$ {cotacao['valor']:.4f}",
-                    delta=f"{cotacao['variacao']:.2f}%"
-                )
+                if cotacao is not None:
+                    st.metric(
+                        label=f"Cotação {moeda_base}:",
+                        value=f"R$ {cotacao['valor']:.4f}",
+                        delta=f"{cotacao['variacao']:.2f}%"
+                    )
+
+                else:
+                    st.error(f"Falha ao carregar: {par}")
+                    
+                    st.metric(
+                        label=f"Cotação {moeda_base}:",
+                        value="N/D"
+                    )
                 
     st.divider()
     st.info(f"Valor {tipo_cotacao} fornecido pela AwesomeAPI.")
