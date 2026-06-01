@@ -42,10 +42,13 @@ def registrar_historico(moeda, valor, tipo, resultado):
 
 def obter_historico_moeda(par, dias):
     endpoint = f"daily/{par}/{dias}"
-    
     dados = resposta_get_api(endpoint)
 
-    if dados:
-        return dados
-    
-    return []
+    if not dados:
+        return []
+
+    if isinstance(dados, dict):
+        if dados.get("status") == 429 or dados.get("code") == "QuotaExceeded":
+            return []
+
+    return dados

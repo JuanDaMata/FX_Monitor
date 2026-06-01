@@ -67,21 +67,23 @@ def renderizar_grafico():
             dias_anteriores
         )
 
-
         if not historico_variacao:
             st.warning("Não foi possível carregar o histórico da API.")
             return
 
-
         if isinstance(historico_variacao, dict):
+            if historico_variacao.get("status") == 429 or historico_variacao.get("code") == "QuotaExceeded":
+                st.error("Limite da API atingido. Tente novamente mais tarde.")
+                return
             historico_variacao = [historico_variacao]
 
+
         data_frame = pd.DataFrame(historico_variacao)
+
 
         if data_frame.empty:
             st.warning("Dados vazios da API.")
             return
-
 
         if tipo_cotacao not in data_frame.columns:
             st.error(f"Coluna '{tipo_cotacao}' não encontrada nos dados da API.")
@@ -111,9 +113,14 @@ def renderizar_grafico():
 
         st.divider()
 
+
         with st.expander("Visualizar histórico em tabela"):
 
             tabela = data_frame.reset_index()
+
+            colunas_uteis = ["timestamp", tipo_cotacao]
+
+            tabela = tabela[[c for c in colunas_uteis if c in tabela.columns]]
 
             if "timestamp" in tabela.columns:
                 tabela = tabela.rename(columns={"timestamp": "Data"})
@@ -125,5 +132,5 @@ def renderizar_grafico():
             st.dataframe(
                 tabela,
                 hide_index=True,
-                use_container_width=True
+                width="stretch"
             )
