@@ -67,9 +67,14 @@ def renderizar_grafico():
             dias_anteriores
         )
 
+
         if not historico_variacao:
             st.warning("Não foi possível carregar o histórico da API.")
             return
+
+
+        if isinstance(historico_variacao, dict):
+            historico_variacao = [historico_variacao]
 
         data_frame = pd.DataFrame(historico_variacao)
 
@@ -77,23 +82,30 @@ def renderizar_grafico():
             st.warning("Dados vazios da API.")
             return
 
+
         if tipo_cotacao not in data_frame.columns:
             st.error(f"Coluna '{tipo_cotacao}' não encontrada nos dados da API.")
             st.write(data_frame.columns)
             return
+
 
         data_frame[tipo_cotacao] = pd.to_numeric(
             data_frame[tipo_cotacao],
             errors="coerce"
         )
 
-        data_frame["timestamp"] = pd.to_datetime(
-            data_frame["timestamp"].astype(int),
-            unit="s"
-        )
 
-        data_frame = data_frame.set_index("timestamp")
-        data_frame.index = data_frame.index.strftime("%d/%m/%Y")
+        if "timestamp" in data_frame.columns:
+            data_frame["timestamp"] = pd.to_datetime(
+                data_frame["timestamp"].astype(int),
+                unit="s",
+                errors="coerce"
+            )
+
+            data_frame = data_frame.dropna(subset=["timestamp"])
+            data_frame = data_frame.set_index("timestamp")
+            data_frame.index = data_frame.index.strftime("%d/%m/%Y")
+
 
         st.line_chart(data_frame[tipo_cotacao])
 
@@ -101,15 +113,17 @@ def renderizar_grafico():
 
         with st.expander("Visualizar histórico em tabela"):
 
-            tabela = data_frame.reset_index()[["timestamp", tipo_cotacao]]
+            tabela = data_frame.reset_index()
+
+            if "timestamp" in tabela.columns:
+                tabela = tabela.rename(columns={"timestamp": "Data"})
 
             tabela = tabela.rename(columns={
-                "timestamp": "Data",
                 tipo_cotacao: f"Valor {tipo_cotacao.upper()}"
             })
 
             st.dataframe(
                 tabela,
                 hide_index=True,
-                width="stretch"
+                use_container_width=True
             )
