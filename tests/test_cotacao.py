@@ -28,3 +28,17 @@ def test_busca_cotacao_sem_retorno(mock_api):
     resultado = buscar_cotacao("USD-BRL")
 
     assert resultado is None
+
+
+@patch("services.resposta_get_api")
+def test_busca_cotacao_json_invalido(mock_api):
+
+    mock_api.return_value = {
+        "USDBRL": {
+            "bid": "5.50"
+        }
+    }
+
+    resultado = buscar_cotacao("USD-BRL")
+
+    assert resultado is None

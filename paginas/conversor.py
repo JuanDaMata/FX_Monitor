@@ -13,6 +13,11 @@ from utils.constantes import (
 )
 
 
+@st.cache_data(ttl=60)
+def buscar_cotacao_cached(par_moeda, tipo):
+    return buscar_cotacao(par_moeda, tipo)
+
+
 def renderizar_conversor():
     st.set_page_config(layout="centered")
 
@@ -22,9 +27,8 @@ def renderizar_conversor():
     if "historico" not in st.session_state:
         st.session_state.historico = []
 
-
     tipo_cotacao = st.selectbox(
-        "Selecione o tipo de cotação: '**bid**' para valor de compra e '**ask**' para valor de venda",
+        "Selecione o tipo de cotação:",
         TIPOS_COTACOES_DISPONIVEIS,
         index=0,
         key="tipo_cotacao_converter"
@@ -54,7 +58,6 @@ def renderizar_conversor():
 
     buscar_cotacao_btn = st.button("Buscar Cotação")
 
-
     if buscar_cotacao_btn:
         try:
             st.info(
@@ -63,16 +66,16 @@ def renderizar_conversor():
 
             par_moedas = f"{moeda_origem}-{moeda_destino}"
 
-            cotacao = buscar_cotacao(
-                par_moedas.upper(),
-                tipo_cotacao
-            )
+            cotacao = buscar_cotacao_cached(par_moedas.upper(), tipo_cotacao)
+
+            if not cotacao:
+                st.error("Cotação indisponível no momento.")
+                st.stop()
 
             valor_convertido = converter(
                 valor_para_converter,
                 cotacao["valor"]
             )
-
 
             st.divider()
             st.subheader("Resultado Da Conversão:")
@@ -81,7 +84,6 @@ def renderizar_conversor():
                 st.success(
                     f"{valor_para_converter} **{moeda_origem}** Valem → **{valor_convertido:.4f} {moeda_destino}**"
                 )
-
             else:
                 st.success(
                     f"{valor_para_converter} **{moeda_origem}** Vale → **{valor_convertido:.4f} {moeda_destino}**"
@@ -102,33 +104,27 @@ def renderizar_conversor():
         except Exception as e:
             st.error(f"Erro na conversão: {e}")
 
-
     st.divider()
+
     with st.expander("Visualizar conversões realizadas"):
         st.subheader("Histórico:")
 
-        if len(st.session_state.historico) == 0:
+        if not st.session_state.historico:
             st.info("Nenhuma conversão realizada até o momento.")
-
         else:
             dados = []
 
             for item in st.session_state.historico:
-
                 origem, destino = item["moeda"].split("-")
 
                 dados.append({
                     "Origem": origem,
                     "Destino": destino,
                     "Valor": item["valor"],
-                    "Convertido": (
-                        f"({item['tipo']}) "
-                        f"{round(item['resultado'], 4)}"
-                    )
+                    "Convertido": f"({item['tipo']}) {round(item['resultado'], 4)}"
                 })
 
             st.dataframe(dados, width="stretch")
-
 
         if st.button("Limpar Histórico"):
             st.session_state.historico = []

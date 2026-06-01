@@ -2,7 +2,6 @@ from api import resposta_get_api
 import streamlit as st
 
 
-@st.cache_data(ttl=60)
 def buscar_cotacao(par_moeda, tipo="bid"):
     url_completa = f"last/{par_moeda}"
 
@@ -11,9 +10,9 @@ def buscar_cotacao(par_moeda, tipo="bid"):
     if not dados:
         return None
 
-    try:
-        moedas_tratadas = par_moeda.replace("-", "")
+    moedas_tratadas = par_moeda.replace("-", "")
 
+    try:
         valor_cotacao = float(dados[moedas_tratadas][tipo])
         variacao = float(dados[moedas_tratadas]["pctChange"])
 
@@ -41,7 +40,6 @@ def registrar_historico(moeda, valor, tipo, resultado):
     return registro
 
 
-@st.cache_data(ttl=60 * 10)
 def obter_historico_moeda(par, dias):
     endpoint = f"daily/{par}/{dias}"
     
