@@ -72,11 +72,17 @@ def renderizar_grafico():
             return
 
         if isinstance(historico_variacao, dict):
+
             if historico_variacao.get("status") == 429 or historico_variacao.get("code") == "QuotaExceeded":
                 st.error("Limite da API atingido. Tente novamente mais tarde.")
                 return
+
             historico_variacao = [historico_variacao]
 
+ 
+        if not isinstance(historico_variacao, list):
+            st.error("Formato inválido retornado pela API")
+            return
 
         data_frame = pd.DataFrame(historico_variacao)
 
