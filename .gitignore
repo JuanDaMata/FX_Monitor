@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 conversor_moedas
+.pytest_cache
+.coverage
